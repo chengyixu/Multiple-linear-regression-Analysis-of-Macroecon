@@ -1,0 +1,76 @@
+---
+title: "Multiple linear regression Analysis of Macroecon"
+author: "Chengyi Xu"
+format: pdf
+editor: visual
+---
+
+## Libraries
+
+```{r}
+#| label: load-packages
+#| include: false
+
+library(tidyverse)
+library(palmerpenguins)
+library(sas7bdat)
+library(dplyr)
+library(ggplot2)
+library(readr)
+library(tidyr)
+library(car)
+library(lmtest)
+```
+
+# Data
+
+```{r}
+dada <- read.sas7bdat("murder.sas7bdat")
+
+```
+
+# Step 1
+
+```{r}
+# STEP ONE: Familiarization with the dataset and variables
+str(dada)
+
+# Univariate exploratory data analysis
+summary(dada)
+
+# Histograms and Probability Plots
+par(mfrow = c(2, 2))
+for (col_name in colnames(dada)[-1]) {
+  hist(dada[[col_name]], main = paste("Histogram of", col_name), xlab = col_name)
+  qqPlot(dada[[col_name]], main = paste("Probability Plot of", col_name))
+}
+
+```
+
+# Step 2
+
+```{r}
+# STEP TWO: Examination of bivariate relationships
+cor_matrix <- cor(dada[, -1])
+cor_matrix
+
+scatterplotMatrix(dada[, -1], main = "Scatterplot Matrix")
+```
+
+# Step 3
+
+```{r}
+# STEP THREE: Analysis of dependent variable (Y) with all independent variables (X1, X2, …) simultaneously
+full_model <- lm(homrate ~ popsz + lowinc + unemp, data = dada)
+summary(full_model)
+confint(full_model)
+```
+
+# Step 4
+
+```{r}
+# STEP FOUR: Model selection
+reduced_model <- lm(homrate ~ lowinc + unemp, data = dada)
+summary(reduced_model)
+confint(reduced_model)
+```

@@ -1,0 +1,120 @@
+---
+title: "Multiple linear regression Analysis of Macroecon"
+author: "Chengyi Xu"
+format: pdf
+editor: visual
+---
+
+## Libraries
+
+```{r}
+#| label: load-packages
+#| include: false
+library(gapminder)
+library(tidyverse)
+library(palmerpenguins)
+library(sas7bdat)
+library(dplyr)
+library(ggplot2)
+library(readr)
+library(tidyr)
+library(car)
+library(lmtest)
+library(pacman)
+library(janitor)
+library(scales)
+```
+
+# Data
+
+```{r}
+library(janitor)
+p_load(tidyverse,rio)
+
+# pulled from: https://www.cdc.gov/surveillance/nrevss/rsv/hhsregion.html
+
+rsv_bos <- import("https://www.cdc.gov/surveillance/nrevss/images/rsvhhs/RSV4PPCent3AVG_HHSReg1.htm") %>% select(-1) %>% row_to_names(row_number = 1) %>% mutate(Region = "Boston")
+rsv_nyc <- import("https://www.cdc.gov/surveillance/nrevss/images/rsvhhs/RSV4PPCent3AVG_HHSReg2.htm") %>% select(-1) %>% row_to_names(row_number = 1) %>% mutate(Region = "NYC")
+rsv_phl <- import("https://www.cdc.gov/surveillance/nrevss/images/rsvhhs/RSV4PPCent3AVG_HHSReg3.htm") %>% select(-1) %>% row_to_names(row_number = 1) %>% mutate(Region = "Philadelphia")
+rsv_atl <- import("https://www.cdc.gov/surveillance/nrevss/images/rsvhhs/RSV4PPCent3AVG_HHSReg4.htm") %>% select(-1) %>% row_to_names(row_number = 1) %>% mutate(Region = "Atlanta")
+rsv_chi <- import("https://www.cdc.gov/surveillance/nrevss/images/rsvhhs/RSV4PPCent3AVG_HHSReg5.htm") %>% select(-1) %>% row_to_names(row_number = 1) %>% mutate(Region = "Chicago")
+rsv_dal <- import("https://www.cdc.gov/surveillance/nrevss/images/rsvhhs/RSV4PPCent3AVG_HHSReg6.htm") %>% select(-1) %>% row_to_names(row_number = 1) %>% mutate(Region = "Dallas")
+
+rsv_all <- rbind(rsv_bos,rsv_nyc,rsv_phl,rsv_atl,rsv_chi,rsv_dal) %>% janitor::clean_names()
+
+```
+
+# Precheck
+
+```{r}
+# Change the data type of total_pcr_tests to float
+rsv_all$total_pcr_tests <- as.numeric(rsv_all$total_pcr_tests)
+
+# Change the data type of percent_positive to float
+rsv_all$percent_positive <- as.numeric(rsv_all$percent_positive)
+
+# Check the minimum of total_pcr_tests
+min(rsv_all$total_pcr_tests)
+
+# Check the maximum of total_pcr_tests
+max(rsv_all$total_pcr_tests)
+
+```
+
+# Q 1
+
+```{r}
+rsv_all$rep_week_date <- as.Date(rsv_all$rep_week_date, format = "%m/%d/%y")
+Q1 <- ggplot(rsv_all, aes(x = rep_week_date, y = total_pcr_tests, color = region)) +
+  geom_line() +
+  scale_color_brewer(palette = "Set1") +
+  facet_wrap(~ region, ncol = 2) +
+  labs(title = "Weekly PCR Tests Performed by Region",
+       x = "Report Week Date",
+       y = "Total PCR Tests",
+       color = "Region") +
+  theme_minimal() +
+  theme(axis.text.x = element_text(angle = 45, hjust = 1))
+```
+
+# Q 2
+
+```{r}
+Q2 <- ggplot(rsv_all, aes(x = rep_week_date, y = percent_positive, color = region)) +
+  geom_line() +
+  scale_color_brewer(palette = "Set1") +
+  labs(title = "Percent Positive Tests by Region",
+       x = "Report Week Date",
+       y = "Percent Positive",
+       color = "Region") +
+  theme_minimal() +
+  theme(axis.text.x = element_text(angle = 45, hjust = 1)) +
+  scale_y_continuous(labels = percent_format())
+```
+
+# Q 3
+
+```{r}
+# Get the unfiltered gapminder dataset
+data(gapminder_unfiltered)
+
+# Convert GDP per capita and population to log scale
+gapminder_unfiltered$log_gdpPercap <- log(gapminder_unfiltered$gdpPercap)
+gapminder_unfiltered$log_pop <- log(gapminder_unfiltered$pop)
+
+# Create a scatterplot with all continents
+Q3 <- ggplot(gapminder_unfiltered, aes(x = log_pop, y = log_gdpPercap, color = continent)) +
+  geom_point(size = 0.5) +
+  scale_color_manual(values = c("blue", "green", "red", "yellow", "purple", "orange")) +
+  scale_size(range = c(0.1, 2)) +
+  ggtitle("Population & GDP per Capita") +
+  labs(subtitle = "Gapminder Data", x = "Population (log)", y = "GDP per Capita (log)") +
+  theme(plot.title = element_text(hjust = 0.5))
+
+```
+
+```{r}
+plot(Q1)
+plot(Q2)
+plot(Q3)
+```
